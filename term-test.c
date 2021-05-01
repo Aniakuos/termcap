@@ -12,7 +12,69 @@
 # define UP_ARROW 4283163
 # define DOWN_ARROW 4348699
 
-char *tab;
+typedef struct		s_dlist
+{
+	char			*line;
+	struct s_dlist	*next;
+	struct s_dlist	*prev;
+}					t_sdlist;
+
+char		*tab;
+t_sdlist	*hist;
+
+/* Given a reference (pointer to pointer) to the head
+   of a DLL and an int, appends a new node at the end  */
+void append(t_sdlist **head_ref, char *new_data)
+{
+    /* 1. allocate node */
+    t_sdlist *new_node = (t_sdlist*)malloc(sizeof(t_sdlist));
+ 
+    t_sdlist *last = *head_ref; /* used in step 5*/
+ 
+    /* 2. put in the data  */
+    new_node->line = new_data;
+ 
+    /* 3. This new node is going to be the last node, so
+          make next of it as NULL*/
+    new_node->next = NULL;
+ 
+    /* 4. If the Linked List is empty, then make the new
+          node as head */
+    if (*head_ref == NULL) {
+        new_node->prev = NULL;
+        *head_ref = new_node;
+        return;
+    }
+ 
+    /* 5. Else traverse till the last node */
+    while (last->next != NULL)
+        last = last->next;
+ 
+    /* 6. Change the next of last node */
+    last->next = new_node;
+ 
+    /* 7. Make last node as previous of new node */
+    new_node->prev = last;
+ 
+    return;
+}
+
+void printList(t_sdlist *node)
+{
+    t_sdlist *last;
+    //printf("\nTraversal in forward direction \n");
+    while (node != NULL) {
+        printf(" %d ", node->line);
+        last = node;
+        node = node->next;
+    }
+ 
+    // printf("\nTraversal in reverse direction \n");
+    // while (last != NULL) {
+    //     printf(" %d ", last->data);
+    //     last = last->prev;
+    // }
+}
 
 int ft_strlen(char *s)
 {
@@ -215,6 +277,7 @@ int		main(void)
 				s[0] = c;
 				s[1] = '\0';
 				tab = ft_strjoin(tab, s);
+				append(&hist, tab);
 			}
 		}
 		c = 0; //flush buffer
