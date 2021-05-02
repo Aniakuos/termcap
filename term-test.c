@@ -22,6 +22,27 @@ typedef struct		s_dlist
 char		*tab;
 t_sdlist	*hist;
 
+char	*ft_strdup(const char *s1)
+{
+	int		i;
+	int		j;
+	char	*p;
+
+	i = 0;
+	j = 0;
+	while (s1[i] != '\0')
+		i++;
+	p = malloc(i * sizeof(char) + 1);
+	if (p == 0)
+		return (0);
+	while (j < i)
+	{
+		p[j] = s1[j];
+		j++;
+	}
+	p[j] = '\0';
+	return (p);
+}
 /* Given a reference (pointer to pointer) to the head
    of a DLL and an int, appends a new node at the end  */
 void append(t_sdlist **head_ref, char *new_data)
@@ -32,7 +53,7 @@ void append(t_sdlist **head_ref, char *new_data)
     t_sdlist *last = *head_ref; /* used in step 5*/
  
     /* 2. put in the data  */
-    new_node->line = new_data;
+    new_node->line = ft_strdup(new_data);
  
     /* 3. This new node is going to be the last node, so
           make next of it as NULL*/
@@ -59,31 +80,6 @@ void append(t_sdlist **head_ref, char *new_data)
     return;
 }
 
-void printList(t_sdlist *node)
-{
-    t_sdlist *last;
-    //printf("\nTraversal in forward direction \n");
-    while (node != NULL) {
-        printf(" %d ", node->line);
-        last = node;
-        node = node->next;
-    }
- 
-    // printf("\nTraversal in reverse direction \n");
-    // while (last != NULL) {
-    //     printf(" %d ", last->data);
-    //     last = last->prev;
-    // }
-}
-
-int ft_strlen(char *s)
-{
-	int i = 0;
-	while(s[i])
-		i++;
-	return (i);
-}
-
 void	ft_putstr(char *s)
 {
 	int i;
@@ -97,6 +93,40 @@ void	ft_putstr(char *s)
 		i++;
 	}
 }
+
+void printList(t_sdlist *node)
+{
+    t_sdlist *last;
+    //printf("\nTraversal in forward direction \n");
+    while (node != NULL) {
+        ft_putstr(node->line);
+		ft_putstr("\n");
+		if(node->next)
+			ft_putstr(node->next->line);
+		ft_putstr("\n");
+		if(node->prev)
+			ft_putstr(node->prev->line);
+		ft_putstr("\n");
+        node = node->next;
+    }
+ 
+    // printf("\n--- \n");
+    // while (last != NULL) {
+	// 	//ft_putstr(last->line);
+    //     //printf("|%s|", last->line);
+    //     last = last->prev;
+    // }
+}
+
+int ft_strlen(char *s)
+{
+	int i = 0;
+	while(s[i])
+		i++;
+	return (i);
+}
+
+
 
 int	nbr_length(int n)
 {
@@ -173,27 +203,7 @@ void	delete_end(int *col, int *row, char *cm, char *ce)
 	tab[ft_strlen(tab) - 1] = '\0';
 }
 
-char	*ft_strdup(const char *s1)
-{
-	int		i;
-	int		j;
-	char	*p;
 
-	i = 0;
-	j = 0;
-	while (s1[i] != '\0')
-		i++;
-	p = malloc(i * sizeof(char) + 1);
-	if (p == 0)
-		return (0);
-	while (j < i)
-	{
-		p[j] = s1[j];
-		j++;
-	}
-	p[j] = '\0';
-	return (p);
-}
 
 char	*ft_strjoin(char const *s1, char const *s2)
 {
@@ -262,10 +272,20 @@ int		main(void)
 		else if(c == 10)
 		{
 			ft_putstr("\r");
-			ft_putstr(tab);
+			//ft_putstr(tab);
 			ft_putstr("\n");
-			//ft_putstr("\033[6n");
-			break;
+			append(&hist, tab);
+			ft_putstr("\r");
+			printList(hist);
+			free(tab);
+			tab = ft_strdup("");
+
+			//break;
+		}
+		else if (c == 4283163)
+		{
+
+			write(1, "test", 5);
 		}
 		else
 		{
@@ -276,10 +296,10 @@ int		main(void)
 				s = (char*)malloc(sizeof(*s) * 2);
 				s[0] = c;
 				s[1] = '\0';
-				tab = ft_strjoin(tab, s);
-				append(&hist, tab);
+				tab = ft_strjoin(tab, s);	
 			}
 		}
 		c = 0; //flush buffer
 	}
+	
 }
