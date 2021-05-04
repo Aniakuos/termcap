@@ -96,16 +96,27 @@ void	ft_putstr(char *s)
 
 void printList(t_sdlist *node)
 {
-    t_sdlist *last;
+    //t_sdlist *last;
     //printf("\nTraversal in forward direction \n");
     while (node != NULL) {
-        ft_putstr(node->line);
-		ft_putstr("\n");
-		if(node->next)
-			ft_putstr(node->next->line);
-		ft_putstr("\n");
+		ft_putstr("------\n");
+		ft_putstr("Prev : ");
 		if(node->prev)
+		{
 			ft_putstr(node->prev->line);
+		}
+		ft_putstr(" | ");
+		ft_putstr("line : ");
+		ft_putstr(node->line);
+		//ft_putstr("\n");
+		ft_putstr(" | Next : ");
+		if(node->next)
+		{
+			ft_putstr(node->next->line);	
+		}
+			
+		//ft_putstr("\n");
+		
 		ft_putstr("\n");
         node = node->next;
     }
@@ -234,7 +245,18 @@ char	*ft_strjoin(char const *s1, char const *s2)
 	return (p);
 }
 
-
+t_sdlist	*ft_lstlast(t_sdlist *lst)
+{
+	lst = hist;
+	if (!lst)
+		lst = (void *)0;
+	else
+	{
+		while (lst->next)
+			lst = lst->next;
+	}
+	return (lst);
+}
 
 
 int		main(void)
@@ -251,7 +273,8 @@ int		main(void)
 	/* init termcap */
 	tgetent(NULL, "xterm");
 	char *cm = tgetstr("cm", NULL); //cursor motion
-	char *ce = tgetstr("ce", NULL); //clear line from cursor
+	char *ce = tgetstr("ce", NULL);
+	//write(1,tgetstr("ce", NULL), ft_strlen(tgetstr("ce", NULL))); //clear line from cursor
 	
 	int c = 0;
 	int row;
@@ -284,9 +307,27 @@ int		main(void)
 		}
 		else if (c == 4283163)
 		{
+			t_sdlist *last;
+			t_sdlist *last1;
 
-			write(1, "test", 5);
+			last = ft_lstlast(last1);
+			//if(last != NULL) {
+				ft_putstr("\r");
+				ft_putstr(last->line);
+				last = last->prev;
+				
+			//}
 		}
+		// else if (c == 4348699)
+		// {
+		// 	t_sdlist *new;
+
+		// 	new = hist;
+		// 	if (new != NULL) {
+		// 		ft_putstr(new->line);
+		// 		//new = new->next;
+		// 	}
+		// }
 		else
 		{
 			col++;
