@@ -247,7 +247,6 @@ char	*ft_strjoin(char const *s1, char const *s2)
 
 t_sdlist	*ft_lstlast(t_sdlist *lst)
 {
-	lst = hist;
 	if (!lst)
 		lst = (void *)0;
 	else
@@ -258,6 +257,89 @@ t_sdlist	*ft_lstlast(t_sdlist *lst)
 	return (lst);
 }
 
+void	ft_lstadd_front(t_sdlist **alst, t_sdlist *new)
+{
+	if (!new)
+		new->next = NULL;
+	new->next = *alst;
+	*alst = new;
+}
+int		ft_lstsize(t_sdlist *lst)
+{
+	int		i;
+
+	i = 0;
+	while (lst != NULL)
+	{
+		i++;
+		lst = lst->next;
+	}
+	return (i);
+}
+t_sdlist	*ft_lstnew(void *line)
+{
+	t_sdlist *lst;
+
+	lst = malloc(sizeof(t_sdlist));
+	if (!lst)
+		return (NULL);
+	lst->line = line;
+	lst->next = NULL;
+	return (lst);
+}
+void insertAfter(t_sdlist *prev_node, char *new_data)
+{
+	
+    /*1. check if the given prev_node is NULL */
+    if (prev_node == NULL) {
+        printf("the given previous node cannot be NULL");
+        return;
+    }
+ 
+    /* 2. allocate new node */
+    t_sdlist *new_node = (t_sdlist*)malloc(sizeof(t_sdlist));
+ 
+    /* 3. put in the data  */
+    new_node->line = ft_strdup(new_data) ;
+ 
+    /* 4. Make next of new node as next of prev_node */
+    new_node->next = prev_node->next;
+ 
+    /* 5. Make the next of prev_node as new_node */
+    prev_node->next = new_node;
+ 
+    /* 6. Make prev_node as previous of new_node */
+    new_node->prev = prev_node;
+ 
+    /* 7. Change previous of new_node's next node */
+    //if (new_node->next != NULL)
+        new_node->next->prev = new_node;
+}
+
+void	ft_putchar_fd(char c, int fd)
+{
+	write(fd, &c, 1);
+}
+
+void	ft_putnbr_fd(int n, int fd)
+{
+	unsigned int nb;
+
+	if (n < 0)
+	{
+		write(fd, "-", 1);
+		nb = n * (-1);
+	}
+	else
+		nb = n;
+	if (nb < 10)
+		ft_putchar_fd(nb + 48, fd);
+	else
+	{
+		ft_putnbr_fd(nb / 10, fd);
+		ft_putchar_fd(nb % 10 + 48, fd);
+	}
+}
 
 int		main(void)
 {
@@ -275,16 +357,25 @@ int		main(void)
 	char *cm = tgetstr("cm", NULL); //cursor motion
 	char *ce = tgetstr("ce", NULL);
 	//write(1,tgetstr("ce", NULL), ft_strlen(tgetstr("ce", NULL))); //clear line from cursor
-	
+	char *tmp;
 	int c = 0;
 	int row;
 	int col;
 	tab = ft_strdup("");
 	char *s;
 	int i = 0;
-
+	t_sdlist *last;
+	if(ft_lstsize(hist) == 0)
+	{
+		hist = ft_lstnew(ft_strdup(""));
+		hist->prev = NULL;
+		//printf("%d",ft_lstsize(hist));
+	}
+	last = ft_lstlast(hist);
 	while (read(0, &c, sizeof(c)) > 0)
 	{
+		
+	
 		get_cursor_position(&col, &row);
 		if (c == LEFT_ARROW)
 			move_cursor_left(&col, &row, cm);
@@ -294,40 +385,51 @@ int		main(void)
 			delete_end(&col, &row, cm, ce);
 		else if(c == 10)
 		{
-			ft_putstr("\r");
+			//ft_putstr("\r");
 			//ft_putstr(tab);
-			ft_putstr("\n");
-			append(&hist, tab);
-			ft_putstr("\r");
-			printList(hist);
+			//ft_putstr("\n");
+			//append(&hist, tab);
+			
+			
+			ft_putnbr_fd(ft_lstsize(hist), 1);
+			if(ft_lstsize(hist) == 1) {
+				ft_putstr("ok");
+				ft_lstadd_front(&hist, ft_lstnew(ft_strdup(tab)));
+				hist->prev = NULL;
+				ft_lstlast(hist)->prev = hist;
+			}
+			else if (ft_lstsize(hist) > 1){
+				insertAfter(ft_lstlast(hist)->prev, tab);
+				ft_putstr("ok2");
+			}
+			
+			//ft_putstr("\r");
 			free(tab);
+			printList(hist);
 			tab = ft_strdup("");
-
+			last = ft_lstlast(hist);
 			//break;
 		}
-		else if (c == 4283163)
+		else if (c == UP_ARROW)
 		{
-			t_sdlist *last;
-			t_sdlist *last1;
 
-			last = ft_lstlast(last1);
-			//if(last != NULL) {
+			if(last && last->prev) {
 				ft_putstr("\r");
-				ft_putstr(last->line);
+				write(1, tgetstr("ce", NULL), ft_strlen(tgetstr("ce", NULL)));
 				last = last->prev;
-				
-			//}
+				ft_putstr(last->line);
+			}
 		}
-		// else if (c == 4348699)
-		// {
-		// 	t_sdlist *new;
-
-		// 	new = hist;
-		// 	if (new != NULL) {
-		// 		ft_putstr(new->line);
-		// 		//new = new->next;
-		// 	}
-		// }
+		else if (c == DOWN_ARROW)
+		{	
+			if (last && last->next) {
+			//	ft_putstr("\nok\n");
+				ft_putstr("\r");
+				write(1, tgetstr("ce", NULL), ft_strlen(tgetstr("ce", NULL)));
+				last = last->next;
+				ft_putstr(last->line);
+			}
+		}
 		else
 		{
 			col++;
