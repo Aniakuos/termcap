@@ -11,6 +11,7 @@
 # define RIGHT_ARROW 4414235
 # define UP_ARROW 4283163
 # define DOWN_ARROW 4348699
+# define ENTER_ARROW 10
 
 typedef struct		s_dlist
 {
@@ -45,40 +46,40 @@ char	*ft_strdup(const char *s1)
 }
 /* Given a reference (pointer to pointer) to the head
    of a DLL and an int, appends a new node at the end  */
-void append(t_sdlist **head_ref, char *new_data)
-{
-    /* 1. allocate node */
-    t_sdlist *new_node = (t_sdlist*)malloc(sizeof(t_sdlist));
+// void append(t_sdlist **head_ref, char *new_data)
+// {
+//     /* 1. allocate node */
+//     t_sdlist *new_node = (t_sdlist*)malloc(sizeof(t_sdlist));
  
-    t_sdlist *last = *head_ref; /* used in step 5*/
+//     t_sdlist *last = *head_ref; /* used in step 5*/
  
-    /* 2. put in the data  */
-    new_node->line = ft_strdup(new_data);
+//     /* 2. put in the data  */
+//     new_node->line = ft_strdup(new_data);
  
-    /* 3. This new node is going to be the last node, so
-          make next of it as NULL*/
-    new_node->next = NULL;
+//     /* 3. This new node is going to be the last node, so
+//           make next of it as NULL*/
+//     new_node->next = NULL;
  
-    /* 4. If the Linked List is empty, then make the new
-          node as head */
-    if (*head_ref == NULL) {
-        new_node->prev = NULL;
-        *head_ref = new_node;
-        return;
-    }
+//     /* 4. If the Linked List is empty, then make the new
+//           node as head */
+//     if (*head_ref == NULL) {
+//         new_node->prev = NULL;
+//         *head_ref = new_node;
+//         return;
+//     }
  
-    /* 5. Else traverse till the last node */
-    while (last->next != NULL)
-        last = last->next;
+//     /* 5. Else traverse till the last node */
+//     while (last->next != NULL)
+//         last = last->next;
  
-    /* 6. Change the next of last node */
-    last->next = new_node;
+//     /* 6. Change the next of last node */
+//     last->next = new_node;
  
-    /* 7. Make last node as previous of new node */
-    new_node->prev = last;
+//     /* 7. Make last node as previous of new node */
+//     new_node->prev = last;
  
-    return;
-}
+//     return;
+// }
 
 void	ft_putstr(char *s)
 {
@@ -211,6 +212,7 @@ void	delete_end(int *col, int *row, char *cm, char *ce)
 		--(*col);
 	tputs(tgoto(cm, *col, *row), 1, putchar_tc);
 	tputs(ce, 1, putchar_tc);
+	//write(1, tgetstr("ce", NULL), ft_strlen(tgetstr("ce", NULL)));
 	tab[ft_strlen(tab) - 1] = '\0';
 }
 
@@ -291,10 +293,10 @@ void insertAfter(t_sdlist *prev_node, char *new_data)
 {
 	
     /*1. check if the given prev_node is NULL */
-    if (prev_node == NULL) {
-        printf("the given previous node cannot be NULL");
-        return;
-    }
+    // if (prev_node == NULL) {
+    //     printf("the given previous node cannot be NULL");
+    //     return;
+    // }
  
     /* 2. allocate new node */
     t_sdlist *new_node = (t_sdlist*)malloc(sizeof(t_sdlist));
@@ -369,13 +371,10 @@ int		main(void)
 	{
 		hist = ft_lstnew(ft_strdup(""));
 		hist->prev = NULL;
-		//printf("%d",ft_lstsize(hist));
 	}
 	last = ft_lstlast(hist);
 	while (read(0, &c, sizeof(c)) > 0)
 	{
-		
-	
 		get_cursor_position(&col, &row);
 		if (c == LEFT_ARROW)
 			move_cursor_left(&col, &row, cm);
@@ -383,26 +382,17 @@ int		main(void)
 			move_cursor_right(&col, &row, cm);
 		else if (c == BACKSPACE)
 			delete_end(&col, &row, cm, ce);
-		else if(c == 10)
+		else if(c == ENTER_ARROW)
 		{
-			//ft_putstr("\r");
-			//ft_putstr(tab);
-			//ft_putstr("\n");
-			//append(&hist, tab);
-			
-			
-			ft_putnbr_fd(ft_lstsize(hist), 1);
+			//ft_putnbr_fd(ft_lstsize(hist), 1);
 			if(ft_lstsize(hist) == 1) {
-				ft_putstr("ok");
 				ft_lstadd_front(&hist, ft_lstnew(ft_strdup(tab)));
 				hist->prev = NULL;
 				ft_lstlast(hist)->prev = hist;
 			}
 			else if (ft_lstsize(hist) > 1){
 				insertAfter(ft_lstlast(hist)->prev, tab);
-				ft_putstr("ok2");
 			}
-			
 			//ft_putstr("\r");
 			free(tab);
 			printList(hist);
@@ -429,6 +419,11 @@ int		main(void)
 				last = last->next;
 				ft_putstr(last->line);
 			}
+			if(!last ->next)
+			{
+				ft_putstr("\r");
+				ft_putstr(tab);
+			}	
 		}
 		else
 		{
