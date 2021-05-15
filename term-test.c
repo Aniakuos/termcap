@@ -22,6 +22,7 @@ typedef struct		s_dlist
 
 char		*tab;
 t_sdlist	*hist;
+t_sdlist	*last;
 
 char	*ft_strdup(const char *s1)
 {
@@ -99,13 +100,12 @@ int	nbr_length(int n)
 	return (i);
 }
 
-void	get_cursor_position(int *col, int *rows)
+void	get_cursor_position(int *col, int *rows, int temp)
 {
 	int		a = 0;
 	int		i = 1;
 	char	buf[255];
 	int		ret;
-	int		temp;
 
 	write(0, "\033[6n", 4);  //report cursor location
 	ret = read(0, buf, 254);
@@ -129,26 +129,21 @@ void	get_cursor_position(int *col, int *rows)
 	}
 }
 
-int		putchar_tc(int tc)
-{
-	write(1, &tc, 1);
-	return (0);
-}
-
 void	move_cursor_left(int *col)
 {
 	if (*col == 0)
 		return ;
 	--(*col);
-	//tputs(tgoto(cm, *col, *row), 1, putchar_tc);
 	write(1, tgetstr("le", NULL), ft_strlen(tgetstr("le", NULL)));
 }
 
 void	move_cursor_right(int *col)
 {
-	++(*col);
-	//tputs(tgoto(cm, *col, *row), 1, putchar_tc);
-	write(1, tgetstr("nd", NULL), ft_strlen(tgetstr("nd", NULL)));
+	// while (*col < tgetnum("co"))
+	// {
+		write(1, tgetstr("nd", NULL), ft_strlen(tgetstr("nd", NULL)));	
+		(*col)++;
+	//}
 }
 
 void	delete_end(int *col)
@@ -249,30 +244,7 @@ void ft_insertafter(t_sdlist *prev_node, char *new_data)
     //if (new_node->next != NULL)
         new_node->next->prev = new_node;
 }
-
-// void	ft_putchar_fd(char c, int fd)
-// {
-// 	write(fd, &c, 1);
-// }
-
-// void	ft_putnbr_fd(int n, int fd)
-// {
-// 	unsigned int nb;
-// 	if (n < 0)
-// 	{
-// 		write(fd, "-", 1);
-// 		nb = n * (-1);
-// 	}
-// 	else
-// 		nb = n;
-// 	if (nb < 10)
-// 		ft_putchar_fd(nb + 48, fd);
-// 	else
-// 	{
-// 		ft_putnbr_fd(nb / 10, fd);
-// 		ft_putchar_fd(nb % 10 + 48, fd);
-// 	}
-// }
+                                                                                                                                        
 void	ft_ini_term()
 {
 	/* change term settings */
@@ -283,34 +255,110 @@ void	ft_ini_term()
 	term.c_cc[VMIN] = 1;
 	term.c_cc[VTIME] = 0;
 	tcsetattr(STDIN_FILENO, TCSANOW, &term);
-	
-}
-int		main(void)
-{
-	
-	ft_ini_term();
 	/* init termcap */
 	tgetent(NULL, "xterm");
-	char *cm = tgetstr("cm", NULL); //cursor motion
-	char *ce = tgetstr("ce", NULL);//clear line from cursor
-	//write(1,tgetstr("ce", NULL), ft_strlen(tgetstr("ce", NULL))); 
-	char *tmp;
-	int c = 0;
-	int row;
-	int col;
+	
+}
+void	ft_enter_arrow()
+{
+	if(ft_lstsize(hist) == 1) 
+	{
+		if(tab[0] != '\0')
+		{
+			ft_lstadd_front(&hist, ft_lstnew(ft_strdup(tab)));
+			hist->prev = NULL;
+			ft_lstlast(hist)->prev = hist;
+		}	
+	}
+	else if (ft_lstsize(hist) > 1)
+	{
+		if(tab[0] != '\0')
+			ft_insertafter(ft_lstlast(hist)->prev, tab);	
+	}
+	//ft_putstr("\r");
+	free(tab);
+	//ft_printlist_hist(hist);
 	tab = ft_strdup("");
-	char *s;
-	int i = 0;
-	t_sdlist *last;
+	last = ft_lstlast(hist);
+	ft_putstr("\n");
+	//break;
+}
+
+void	ft_declaration()
+{
+	char *cm;
+	char *ce;
+
+	cm = tgetstr("cm", NULL); //cursor motion
+	ce = tgetstr("ce", NULL);//clear line from cursor
+	tab = ft_strdup("");
+}
+
+void	ft_up_arrow()
+{
+	if(last && last->prev) 
+	{
+		ft_putstr("\r");
+		write(1, tgetstr("ce", NULL), ft_strlen(tgetstr("ce", NULL)));
+		last = last->prev;
+		ft_putstr(last->line);
+	}
+}
+
+void	ft_down_arrow()
+{
+	if (last && last->next) 
+	{
+	//	ft_putstr("\nok\n");
+		ft_putstr("\r");
+		write(1, tgetstr("ce", NULL), ft_strlen(tgetstr("ce", NULL)));
+		last = last->next;
+		ft_putstr(last->line);
+	}
+	if(!last ->next)
+	{
+		ft_putstr("\r");
+		ft_putstr(tab);
+	}
+}
+
+void	ft_init_hist()
+{
+	ft_ini_term();
+	ft_declaration();
 	if(ft_lstsize(hist) == 0)
 	{
 		hist = ft_lstnew(ft_strdup(""));
 		hist->prev = NULL;
 	}
 	last = ft_lstlast(hist);
+}
+
+void	ft_remplir_tab(char *s, int col, int c)
+{
+	col++;
+	write(0, &c, 1);
+	if (c >= 32 && c <= 126)
+	{
+		s = (char*)malloc(sizeof(*s) * 2);
+		s[0] = c;
+		s[1] = '\0';
+		tab = ft_strjoin(tab, s);	
+	}
+}
+
+int		main(void)
+{
+	int c;
+	int row;
+	int col;
+	char *s;
+	
+	c = 0;
+	ft_init_hist();
 	while (read(0, &c, sizeof(c)) > 0)
 	{
-		get_cursor_position(&col, &row);
+		get_cursor_position(&col, &row, 0);
 		if (c == LEFT_ARROW)
 			move_cursor_left(&col);
 		else if (c == RIGHT_ARROW)
@@ -318,67 +366,13 @@ int		main(void)
 		else if (c == BACKSPACE)
 			delete_end(&col);
 		else if(c == ENTER_ARROW)
-		{
-			
-			//ft_putnbr_fd(ft_lstsize(hist), 1);
-			if(ft_lstsize(hist) == 1) {
-				if(tab[0] != '\0')
-				{
-					ft_lstadd_front(&hist, ft_lstnew(ft_strdup(tab)));
-					hist->prev = NULL;
-					ft_lstlast(hist)->prev = hist;
-				}	
-			}
-			else if (ft_lstsize(hist) > 1){
-				if(tab[0] != '\0')
-					ft_insertafter(ft_lstlast(hist)->prev, tab);	
-			}
-			//ft_putstr("\r");
-			free(tab);
-			ft_printlist_hist(hist);
-			tab = ft_strdup("");
-			last = ft_lstlast(hist);
-			ft_putstr("\n");
-			//break;
-		}
+			ft_enter_arrow();
 		else if (c == UP_ARROW)
-		{
-
-			if(last && last->prev) {
-				ft_putstr("\r");
-				write(1, tgetstr("ce", NULL), ft_strlen(tgetstr("ce", NULL)));
-				last = last->prev;
-				ft_putstr(last->line);
-			}
-		}
+			ft_up_arrow();
 		else if (c == DOWN_ARROW)
-		{	
-			if (last && last->next) {
-			//	ft_putstr("\nok\n");
-				ft_putstr("\r");
-				write(1, tgetstr("ce", NULL), ft_strlen(tgetstr("ce", NULL)));
-				last = last->next;
-				ft_putstr(last->line);
-			}
-			if(!last ->next)
-			{
-				ft_putstr("\r");
-				ft_putstr(tab);
-			}	
-		}
+			ft_down_arrow();
 		else
-		{
-			col++;
-			write(0, &c, 1);
-			if (c >= 32 && c <= 126)
-			{
-				s = (char*)malloc(sizeof(*s) * 2);
-				s[0] = c;
-				s[1] = '\0';
-				tab = ft_strjoin(tab, s);	
-			}
-		}
+			ft_remplir_tab(s, col, c);
 		c = 0; //flush buffer
 	}
-	
 }
